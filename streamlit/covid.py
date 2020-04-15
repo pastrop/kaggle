@@ -3,8 +3,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-import datetime
-from dateutil.parser import parse
+#import datetime
+#from dateutil.parser import parse
 
 st.title('COVID19 Data Analysis')
 
@@ -18,20 +18,33 @@ if st.checkbox('Show raw data'):
     st.write(df.head(10))
 
 st.subheader('Comparison of the "Confirmed" and "Death" Curves for Hubei Province, Italy, New York, Spain')
-start = df.loc[df['Province/State'] == 'Hubei', 'ObservationDate'].iloc[0]
-finish = df.loc[df['Province/State'] == 'Hubei', 'ObservationDate'].iloc[-1]
+#start = df.loc[df['Province/State'] == 'Hubei', 'ObservationDate'].iloc[0]
+#finish = df.loc[df['Province/State'] == 'Hubei', 'ObservationDate'].iloc[-1]
 #dt = parse(start).date()
 #end = parse(finish).date()
-dat_max = len(list(df.loc[df['Province/State'] == 'Hubei', 'ObservationDate'].values))
-dat = st.slider('date selector', 0, dat_max)
-st.write(dat)
+len_max = len(list(df.loc[df['Province/State'] == 'Hubei', 'ObservationDate'].values))
+len_Italy = len(list(df.loc[df['Country/Region'] == 'Italy', 'Deaths'].values))
+len_NY = len(list(df.loc[df['Province/State'] == 'New York', 'Deaths'].values))
+len_Spain = len(list(df.loc[df['Country/Region'] == 'Spain', 'Deaths'].values))
+
+Italy = [0]*(len_max-len_Italy)+list(df.loc[df['Country/Region'] == 'Italy', 'Deaths'].values)
+NY = [0]*(len_max-len_NY)+list(df.loc[df['Province/State'] == 'New York', 'Deaths'].values)
+Spain = [0]*(len_max-len_Spain)+list(df.loc[df['Country/Region'] == 'Spain', 'Deaths'].values)
+
+st.write(len_max,len(NY),len(Spain))
+dat = st.slider('date selector', 0, len_max)
+
+
 test = pd.DataFrame({
   'date': list(df.loc[df['Province/State'] == 'Hubei', 'ObservationDate'].values)[dat:],
-  'confirmed': list(df.loc[df['Province/State'] == 'Hubei', 'Confirmed'].values)[dat:]
+  'Hubei - Deaths': list(df.loc[df['Province/State'] == 'Hubei', 'Deaths'].values)[dat:],
+  'Italy - Deaths': Italy[dat:],
+  'NY - Deaths': NY[dat:],
+  'Spain - Deaths': Spain[dat:]
 })
 
 test = test.rename(columns={'date':'index'}).set_index('index')
-st.line_chart(test)
+st.line_chart(test, use_container_width=True)
 
 fig_test, ax = plt.subplots(figsize=(20, 8)) 
 # Add x-axis and y-axis
@@ -40,33 +53,18 @@ ax.plot(df.loc[df['Province/State'] == 'Hubei', 'ObservationDate'],
           df.loc[df['Province/State'] == 'Hubei', 'Confirmed'],label = 'Hubei - Confirmed',
           color='purple')
 
-ax.plot(df.loc[df['Province/State'] == 'Hubei', 'ObservationDate'],
-          df.loc[df['Province/State'] == 'Hubei', 'Deaths'],label = 'Hubei - Deaths',
-          color='maroon')
-
 ax.plot(df.loc[df['Country/Region'] == 'Italy', 'ObservationDate'],
           df.loc[df['Country/Region'] == 'Italy', 'Confirmed'], label = 'Italy - Confirmed',
           color='orange')
-
-ax.plot(df.loc[df['Country/Region'] == 'Italy', 'ObservationDate'],
-          df.loc[df['Country/Region'] == 'Italy', 'Deaths'],label = 'Italy - Deaths',
-          color='blue')
 
 ax.plot(df.loc[df['Province/State'] == 'New York', 'ObservationDate'],
           df.loc[df['Province/State'] == 'New York', 'Confirmed'],label = 'New York - Confirmed',
           color='red')
 
-ax.plot(df.loc[df['Province/State'] == 'New York', 'ObservationDate'],
-          df.loc[df['Province/State'] == 'New York', 'Deaths'],label = 'New York - Deaths',
-          color='yellow')
-
 ax.plot(df.loc[df['Country/Region'] == 'Spain', 'ObservationDate'],
           df.loc[df['Country/Region'] == 'Spain', 'Confirmed'], label = 'Spain - Confirmed',
           color='green')
 
-ax.plot(df.loc[df['Country/Region'] == 'Spain', 'ObservationDate'],
-          df.loc[df['Country/Region'] == 'Spain', 'Deaths'],label = 'Spain - Deaths',
-          color='black')
 
 
 # Set title and labels for axes
@@ -78,7 +76,8 @@ plt.legend(loc='upper left')
 
 st.pyplot(fig_test)
 
-# interactive chart - Major Metro Areas:
+# interactive charts - US Major Metro Areas:
+
 st.subheader('Major Metro Areas: Confirmed Cases Normalized by Population Density (in days starting on 01/22/2020)')
 df_us = pd.read_csv('time_series_covid_19_confirmed_US.csv')
 if st.checkbox('Show raw data - US Cities'):
@@ -128,7 +127,7 @@ chart_cities = chart_cities.set_index('day')
 st.line_chart(chart_cities, width = 1000, height = 700)
 
 
-# test of side by side plots
+# side by side plots - Daily Infections
 st.subheader('Daily Infection Rate - NYC')
 
 frame_NY = {'ObservationDate': df.loc[df['Province/State'] == 'New York', 'ObservationDate'],
@@ -170,6 +169,28 @@ plt.title('Normalized Infection Rate')
 
 st.pyplot(fig)
 
+# NY Death Rate & Normilized Death Rate
+fig = plt.figure(figsize=(10, 6))
+fig.add_subplot(1,2,1)
+
+plot_NY = []
+rate_NY = frame_NY_grouped_death.values
+rate_NY_filtered = list(filter(lambda x: x != 0, rate_NY))        
+for item in zip(rate_NY_filtered[::],rate_NY_filtered[1:]):
+    plot_NY.append((item[1]-item[0]))
+plt.plot(plot_NY)
+plt.title('Death Rate')
+
+fig.add_subplot(1,2,2)
+plot_NY = []
+rate_NY = frame_NY_grouped_death.values
+rate_NY_filtered = list(filter(lambda x: x != 0, rate_NY))        
+for item in zip(rate_NY_filtered[::],rate_NY_filtered[1:]):
+    plot_NY.append((item[1]-item[0])/item[0])
+plt.plot(plot_NY)
+plt.title('Normalized Death Rate')
+
+st.pyplot(fig)
 #future functionality
 
 #chart_data_x = pd.DataFrame({'Date':df.loc[df['Country/Region'] == 'Italy', 'ObservationDate'].values})
