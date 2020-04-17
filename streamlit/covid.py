@@ -31,7 +31,6 @@ Italy = [0]*(len_max-len_Italy)+list(df.loc[df['Country/Region'] == 'Italy', 'De
 NY = [0]*(len_max-len_NY)+list(df.loc[df['Province/State'] == 'New York', 'Deaths'].values)
 Spain = [0]*(len_max-len_Spain)+list(df.loc[df['Country/Region'] == 'Spain', 'Deaths'].values)
 
-st.write(len_max,len(NY),len(Spain))
 dat = st.slider('date selector', 0, len_max)
 
 
@@ -125,7 +124,18 @@ chart_cities = pd.DataFrame({'day':list(range(val[0],val[1])),
 
 chart_cities = chart_cities.set_index('day')
 st.line_chart(chart_cities, width = 1000, height = 700)
+#comparing different geograpies vs NY State:
+st.subheader('comparing different geograpies with NY State - Confirmed Cases')
+NYState_data = list(df.loc[df['Province/State'] == 'New York', 'Confirmed'].values.flatten())
+Russia_data = list(df.loc[df['Country/Region'] == 'Russia', 'Confirmed'].values.flatten())
+dat_comp_ny = st.slider('period selector', 0, len(NYState_data), (0,len(NYState_data)))
+st.write(dat_comp_ny)
+compare_NYstate = pd.DataFrame({'New York State':NYState_data[dat_comp_ny[0]:dat_comp_ny[1]]})
+st.line_chart(compare_NYstate, width = 1000, height = 700)
 
+dat_comp_ru = st.slider('period selector', 0, len(Russia_data), (0,len(Russia_data)))
+compare_Russia = pd.DataFrame({'Russia':Russia_data[dat_comp_ru[0]:dat_comp_ru[1]]})
+st.line_chart(compare_Russia, width = 1000, height = 700)
 
 # side by side plots - Daily Infections
 st.subheader('Daily Infection Rate - NYC')
